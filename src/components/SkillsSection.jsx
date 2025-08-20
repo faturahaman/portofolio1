@@ -1,85 +1,105 @@
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-
-const skills = [
-  // Frontend
-  { name: "HTML/CSS", level: 95, category: "frontend" },
-  { name: "JavaScript", level: 90, category: "frontend" },
-  { name: "React", level: 90, category: "frontend" },
-  { name: "TypeScript", level: 85, category: "frontend" },
-  { name: "Tailwind CSS", level: 90, category: "frontend" },
-  { name: "Next.js", level: 80, category: "frontend" },
-
-  // Backend
-  { name: "Node.js", level: 80, category: "backend" },
-  { name: "Express", level: 75, category: "backend" },
-  { name: "MongoDB", level: 70, category: "backend" },
-  { name: "PostgreSQL", level: 65, category: "backend" },
-  { name: "GraphQL", level: 60, category: "backend" },
-
-  // Tools
-  { name: "Git/GitHub", level: 90, category: "tools" },
-  { name: "Docker", level: 70, category: "tools" },
-  { name: "Figma", level: 85, category: "tools" },
-  { name: "VS Code", level: 95, category: "tools" },
-];
-
-const categories = ["all", "frontend", "backend", "tools"];
+import { useEffect, useState } from "react";
+import { Code, Database } from "lucide-react";
+import {
+  SiReact,
+  SiVuedotjs,
+  SiTailwindcss,
+  SiBootstrap,
+  SiLaravel,
+  SiVite,
+} from "react-icons/si";
 
 export const SkillsSection = () => {
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredSkills = skills.filter(
-    (skill) => activeCategory === "all" || skill.category === activeCategory
-  );
+  // Mapping skill ke icon
+  const skillIcons = {
+    React: <SiReact className="w-6 h-6 text-primary" />,
+    Tailwind: <SiTailwindcss className="w-6 h-6 text-primary" />,
+    Bootstrap: <SiBootstrap className="w-6 h-6 text-primary" />,
+    Laravel: <SiLaravel className="w-6 h-6 text-primary" />,
+    Vue: <SiVuedotjs className="w-6 h-6 text-primary" />,
+    Vite: <SiVite className="w-6 h-6 text-primary" />,
+    SQL: <Database className="w-6 h-6 text-primary" />,
+    default: <Code className="w-6 h-6 text-primary" />,
+  };
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        const response = await fetch(
+          "https://api.github.com/users/faturahaman/repos"
+        );
+        const repos = await response.json();
+
+        // Hitung jumlah repos per bahasa
+        const languageCount = {};
+        repos.forEach((repo) => {
+          if (repo.language) {
+            languageCount[repo.language] =
+              (languageCount[repo.language] || 0) + 1;
+          }
+        });
+
+        // Konversi ke array skill
+        const skillArray = Object.keys(languageCount).map((lang) => ({
+          name: lang,
+        }));
+
+        // Tambahkan beberapa framework manually
+        const frameworks = [
+          "React",
+          "Tailwind",
+          "Bootstrap",
+          "Laravel",
+          "Vue",
+          "Vite",
+        ];
+        frameworks.forEach((fw) => {
+          skillArray.push({ name: fw });
+        });
+
+        setSkills(skillArray);
+      } catch (error) {
+        console.error("Error fetching GitHub skills:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSkills();
+  }, []);
+
   return (
-    <section id="skills" className="py-24 px-4 relative bg-secondary/30">
+    <section id="skills" className="py-24 px-4 relative bg-secondary/10">
       <div className="container mx-auto max-w-5xl">
         <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
-          My <span className="text-primary"> Skills</span>
+          Languages & <span className="text-primary">Frameworks/Tools</span>
         </h2>
 
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {categories.map((category, key) => (
-            <button
-              key={key}
-              onClick={() => setActiveCategory(category)}
-              className={cn(
-                "px-5 py-2 rounded-full transition-colors duration-300 capitalize",
-                activeCategory === category
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/70 text-forefround hover:bd-secondary"
-              )}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-center">Loading skills from GitHub...</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {skills.map((skill, idx) => (
+              <div
+                key={idx}
+                className="bg-card p-6 rounded-lg shadow-xs flex flex-col items-center gap-4 card-hover"
+              >
+                {/* Icon */}
+                <div className="p-3 rounded-full bg-primary/10">
+                  {skillIcons[skill.name] || skillIcons.default}
+                </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSkills.map((skill, key) => (
-            <div
-              key={key}
-              className="bg-card p-6 rounded-lg shadow-xs card-hover"
-            >
-              <div className="text-left mb-4">
-                <h3 className="font-semibold text-lg"> {skill.name}</h3>
+                {/* Skill Name */}
+                <h3 className="font-semibold text-lg text-center">
+                  {skill.name}
+                </h3>
               </div>
-              <div className="w-full bg-secondary/50 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-primary h-2 rounded-full origin-left animate-[grow_1.5s_ease-out]"
-                  style={{ width: skill.level + "%" }}
-                />
-              </div>
-
-              <div className="text-right mt-1">
-                <span className="text-sm text-muted-foreground">
-                  {skill.level}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
